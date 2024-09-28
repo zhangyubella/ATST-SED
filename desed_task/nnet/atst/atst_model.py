@@ -1,7 +1,7 @@
 import os
 import torch
 from .audio_transformer import FrameASTModel
-
+from pathlib import Path
 class ATST(torch.nn.Module):
     def __init__(self, atst_path, *args, atst_dropout=0.0, **kwargs, ) -> None:
         super().__init__(*args, **kwargs)
@@ -28,7 +28,7 @@ class ATST(torch.nn.Module):
 
     def load_atst(self, path=None):
         if path is None:
-            pre_path = "../nnet/ckpts/atst_as2M.ckpt" 
+            pre_path = Path(__file__).parent / "../ckpts/atst_as2M.ckpt"
             assert os.path.exists(pre_path), "Please make sure you have a default path to load ATST. Please change this path to the atst_as2M.ckpt that you downloaded."
             path = pre_path    # Change path to the atst_as2M.ckpt the downloaded checkpoint from the home page.
         state_dict = torch.load(path, map_location="cpu")["state_dict"]

@@ -6,9 +6,7 @@ import torchaudio
 import random
 import torch
 import glob
-import h5py
 import torch.nn as nn
-from pathlib import Path
 from torchaudio.transforms import MelSpectrogram, AmplitudeToDB
 
 
@@ -96,7 +94,6 @@ def process_labels(df, onset, offset):
 
 
 def read_audio(file, multisrc, random_channel, pad_to):
-    
     mixture, fs = torchaudio.load(file)
     
     if not multisrc:
@@ -201,15 +198,20 @@ class StronglyAnnotatedSet(Dataset):
         # we construct a dictionary for each example
         self.examples = examples
         self.examples_list = list(examples.keys())
-        print("Number of examples: ", len(self.examples_list))
+        print(f"StronglyAnnotatedSet has filtered the number of examples in {audio_folder}: ", len(self.examples_list))
     def __len__(self):
         return len(self.examples_list)
 
     def __getitem__(self, item):
         c_ex = self.examples[self.examples_list[item]]
-        mixture, onset_s, offset_s, padded_indx = read_audio(
-            c_ex["mixture"], self.multisrc, self.random_channel, self.pad_to
-        )
+        try:
+            mixture, onset_s, offset_s, padded_indx = read_audio(
+                c_ex["mixture"], self.multisrc, self.random_channel, self.pad_to
+            )
+        except Exception as e:
+            file = c_ex["mixture"]
+            print(f"Error loading {file}: {e}")
+            exit(100)
 
         # labels
         labels = c_ex["events"]
@@ -217,7 +219,7 @@ class StronglyAnnotatedSet(Dataset):
         # to steps
         labels_df = pd.DataFrame(labels)
         labels_df = process_labels(labels_df, onset_s, offset_s)
-        
+
         # check if labels exists:
         if not len(labels_df):
             max_len_targets = self.encoder.n_frames
@@ -269,7 +271,7 @@ class WeakSet(Dataset):
 
         self.examples = examples
         self.examples_list = list(examples.keys())
-        print(len(self.examples))
+        print(f"WeakSet has the number of examples in {audio_folder}: ", len(self.examples))
 
     def __len__(self):
         return len(self.examples_list)
@@ -317,7 +319,7 @@ class UnlabeledSet(Dataset):
         self.fs = fs
         self.pad_to = pad_to * fs if pad_to is not None else None 
         self.examples = glob.glob(os.path.join(unlabeled_folder, "*.wav"))
-        print(len(self.examples))
+        print(f"UnlabeledSet has the number of examples in {unlabeled_folder}: ", len(self.examples))
         self.return_filename = return_filename
         self.random_channel = random_channel
         self.multisrc = multisrc

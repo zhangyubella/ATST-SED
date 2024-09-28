@@ -13,8 +13,8 @@ from train.local.stage1_trainer import SEDTask4
 from desed_task.dataio.datasets_atst_sed import StronglyAnnotatedSet, UnlabeledSet, WeakSet
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint
-from pytorch_lightning.loggers import TensorBoardLogger
-
+from pytorch_lightning.loggers import TensorBoardLogger, WandbLogger
+from pathlib import Path
 import warnings
 warnings.filterwarnings("ignore")
 
@@ -62,7 +62,6 @@ def separate_opt_params(model):
 
 def single_run(
     config,
-    log_dir,
     gpus,
     checkpoint_resume=None,
     test_state_dict=None,
@@ -71,8 +70,6 @@ def single_run(
     external=False,
     callbacks=None
 ):
-    config.update({"log_dir": log_dir})
-
     # handle seed
     seed = config["training"]["seed"]
     if seed:
@@ -247,11 +244,12 @@ def single_run(
         for i, lr in enumerate(init_lrs):
             opt[0].param_groups[i]["lr"] = lr
 
-        logger = TensorBoardLogger(
-            os.path.dirname(config["log_dir"]), config["log_dir"].split("/")[-1],
-        )
+        # logger_tb = TensorBoardLogger(
+        #     os.path.dirname(config["log_dir"]), config["log_dir"].split("/")[-1],
+        # )
+        # print(f"experiment dir: {logger_tb.log_dir}")
+        logger = WandbLogger(save_dir=config["training"]["log_dir"], name="wb_logs")
         logger.log_hyperparams(config)
-        print(f"experiment dir: {logger.log_dir}")
 
         if callbacks is None:
             callbacks = [
@@ -316,7 +314,7 @@ def single_run(
             callbacks=callbacks,
             accelerator=accelerator,
             devices=devices,
-            strategy=config["training"].get("backend"),
+            #strategy='ddp',
             accumulate_grad_batches=config["training"]["accumulate_batches"],
             logger=logger,
             gradient_clip_val=config["training"]["gradient_clip"],
@@ -344,14 +342,14 @@ def prepare_run(argv=None):
     parser = argparse.ArgumentParser("Training a SED system for DESED Task")
     parser.add_argument(
         "--conf_file",
-        default="./confs/stage1_real.yaml",
+        default=Path(__file__).parent / "./confs/stage1.yaml",
         help="The configuration file with all the experiment parameters.",
     )
-    parser.add_argument(
-        "--log_dir",
-        default="./exp/stage1/",
-        help="Directory where to save tensorboard logs, saved models, etc.",
-    )
+    # parser.add_argument(
+    #     "--log_dir",
+    #     default="/20A021/DESED_dataset/exp/stage1/",
+    #     help="Directory where to save tensorboard logs, saved models, etc.",
+    # )
     parser.add_argument(
         "--resume_from_checkpoint",
         default=None,
@@ -363,7 +361,7 @@ def prepare_run(argv=None):
     parser.add_argument(
         "--gpus",
         default="1",
-        help="The number of GPUs to train on, or the gpu to use, default='0', "
+        help="The number of GPUs to train on, or the gpu to use, default='1', "
              "so uses one GPU",
     )
     parser.add_argument(
@@ -384,15 +382,15 @@ def prepare_run(argv=None):
         default=False,
 
     )
-    parser.add_argument(
-        "--prefix",
-        default="",
-        type=str,
-        help="The strong annotations coming from Audioset will be included in the training phase.",
-    )
+    # parser.add_argument(
+    #     "--prefix",
+    #     default="",
+    #     type=str,
+    #     help="The strong annotations coming from Audioset will be included in the training phase.",
+    # )
 
     args = parser.parse_args(argv)
-    args.log_dir += args.prefix
+    #args.log_dir += args.prefix
     with open(args.conf_file, "r") as f:
         configs = yaml.safe_load(f)
 
@@ -429,7 +427,7 @@ if __name__ == "__main__":
     # launch run
     single_run(
         configs,
-        args.log_dir,
+        #args.log_dir,
         args.gpus,
         args.resume_from_checkpoint,
         test_model_state_dict,
