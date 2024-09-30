@@ -126,13 +126,13 @@ class SEDTask4(pl.LightningModule):
         self.get_weak_student_f1_seg_macro = torchmetrics.classification.f_beta.MultilabelF1Score(
             len(self.encoder.labels),
             average="macro",
-            compute_on_step=False,
+            # compute_on_step=False, # deprecated. https://github.com/Lightning-AI/torchmetrics/issues/789
         )
 
         self.get_weak_teacher_f1_seg_macro = torchmetrics.classification.f_beta.MultilabelF1Score(
             len(self.encoder.labels),
             average="macro",
-            compute_on_step=False,
+            # compute_on_step=False, # deprecated. https://github.com/Lightning-AI/torchmetrics/issues/789
         )
 
         self.scaler = self._init_scaler()
@@ -176,14 +176,11 @@ class SEDTask4(pl.LightningModule):
     @property
     def exp_dir(self):
         if self._exp_dir is None:
-            try:
-                self._exp_dir = self.logger.log_dir
-            except Exception as e:
-                self._exp_dir = self.hparams["log_dir"]
+            self._exp_dir = self.hparams["training"]["log_dir"]
         return self._exp_dir
 
-    def lr_scheduler_step(self, scheduler, optimizer_idx, metric):
-        scheduler.step()
+    def lr_scheduler_step(self, scheduler, metric):
+        scheduler.step(metric) # missing 1 required positional argument: 'metric' 可以去掉这个override，因为和base_class的相同，还要check if metric is None
 
     def update_ema(self, alpha, global_step, model, ema_model):
         for (k, ema_params), params in zip(ema_model.named_parameters(), model.parameters()):      
@@ -434,7 +431,7 @@ class SEDTask4(pl.LightningModule):
             alpha_st=1,
             )
 
-    def validation_epoch_end(self, outputs):
+    def on_validation_epoch_end(self):
         weak_student_f1_macro = self.get_weak_student_f1_seg_macro.compute()
         weak_teacher_f1_macro = self.get_weak_teacher_f1_seg_macro.compute()
         # Strong real
@@ -581,6 +578,7 @@ class SEDTask4(pl.LightningModule):
     def on_test_epoch_end(self):
         # pub eval dataset
         save_dir = os.path.join(self.exp_dir, "metrics_test")
+        os.makedirs(save_dir, exist_ok=True)
 
         if self.evaluation:
             # only save prediction scores

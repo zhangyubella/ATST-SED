@@ -18,11 +18,24 @@ def to_mono(mixture, random_ch=False):
             mixture = mixture[indx]
     return mixture
 
-if __name__ == "__main__":
-    audio_dir = '/20A021/DESED_dataset/strong_label_real(3373)'
-    audio_dir = '/20A021/DESED_dataset/SynthDataset/Train/soundscapes_16k'
+def resample():
+    import subprocess
+    audio_dir = '/20A021/DESED_dataset/DESED_public_eval/audio/eval/resample/'
+    save_dir = '/20A021/DESED_dataset/DESED_public_eval/audio/eval/resample_16k/'
+    row_list = []
     for audio_file in tqdm(os.listdir(audio_dir)):
-        mixture, fs = torchaudio.load(os.path.join(audio_dir, audio_file))
-        # mixture = to_mono(mixture)
-        # transform = ATSTTransform()
-        # output = transform(mixture)
+        try:
+            # Construct ffmpeg command to resample the audio file
+            command = [
+                'ffmpeg', '-i', os.path.join(audio_dir, audio_file),  # Input file
+                '-ar', str(16000),  # Resample to target sample rate
+                '-loglevel', 'quiet',
+                os.path.join(save_dir, audio_file)  # Output file path
+            ]
+            # Run the command
+            subprocess.run(command, check=True)
+        except subprocess.CalledProcessError as e:
+            print(f"Error during resampling: {e}")
+
+if __name__ == "__main__":
+    resample()

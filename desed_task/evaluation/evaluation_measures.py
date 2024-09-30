@@ -269,7 +269,7 @@ def compute_psds_from_scores(
     num_jobs=4,
     save_dir=None,
 ):
-    psds, psd_roc, single_class_rocs, *_ = sed_scores_eval.intersection_based.psds(
+    psds_value, single_class_psds, psd_roc, single_class_rocs = sed_scores_eval.intersection_based.psds(
         scores=scores, ground_truth=ground_truth_file,
         audio_durations=durations_file,
         dtc_threshold=dtc_threshold, gtc_threshold=gtc_threshold,
@@ -289,6 +289,6 @@ def compute_psds_from_scores(
             dtc_threshold=dtc_threshold, gtc_threshold=gtc_threshold,
             cttc_threshold=cttc_threshold, alpha_ct=alpha_ct,
             alpha_st=alpha_st, unit_of_time='hour',  max_efpr=max_efpr,
-            psds=psds,
+            psds=psds_value,
         )
-    return psds
+    return psds_value

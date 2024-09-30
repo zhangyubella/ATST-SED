@@ -93,5 +93,5 @@ net:
 ultra:
   atst_dropout: 0.0
   model_init: # leave it empty
-  atst_init: # absolute path to checkpoint
+  atst_init: "/20A021/DESED_dataset/ckpts/atst_as2M.ckpt" # absolute path to checkpoint
 comments: 

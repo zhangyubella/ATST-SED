@@ -13,7 +13,8 @@ from local.classes_dict import classes_labels
 from local.stage2_trainer import SEDICT
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint
-from pytorch_lightning.loggers import TensorBoardLogger
+from pytorch_lightning.loggers import TensorBoardLogger, WandbLogger
+from pathlib import Path
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -62,7 +63,6 @@ def separate_opt_params(model):
 
 def single_run(
     config,
-    log_dir,
     gpus,
     checkpoint_resume=None,
     test_state_dict=None,
@@ -70,7 +70,7 @@ def single_run(
     evaluation=False,
     callbacks=None
 ):
-    config.update({"log_dir": log_dir})
+    #config.update({"log_dir": log_dir})
 
     # handle seed
     seed = config["training"]["seed"]
@@ -262,11 +262,12 @@ def single_run(
         for i, lr in enumerate(init_lrs):
             opt[0].param_groups[i]["lr"] = lr
 
-        logger = TensorBoardLogger(
-            os.path.dirname(config["log_dir"]), config["log_dir"].split("/")[-1],
-        )
+        # logger = TensorBoardLogger(
+        #     os.path.dirname(config["log_dir"]), config["log_dir"].split("/")[-1],
+        # )
+        logger = WandbLogger(save_dir=config["training"]["log_dir"], name="wb_logs")
         logger.log_hyperparams(config)
-        print(f"experiment dir: {logger.log_dir}")
+        dir = logger.log_dir
 
         if callbacks is None:
             callbacks = [
@@ -334,7 +335,7 @@ def single_run(
         callbacks=callbacks,
         accelerator=accelerator,
         devices=devices,
-        strategy=config["training"].get("backend"),
+        #strategy=config["training"].get("backend"),
         accumulate_grad_batches=config["training"]["accumulate_batches"],
         logger=logger,
         gradient_clip_val=config["training"]["gradient_clip"],
@@ -362,22 +363,22 @@ def prepare_run(argv=None):
     parser = argparse.ArgumentParser("Training a SED system for DESED Task")
     parser.add_argument(
         "--conf_file",
-        default="./confs/stage2.yaml",
+        default = Path(__file__).parent / "./confs/stage2.yaml",
         help="The configuration file with all the experiment parameters.",
     )
-    parser.add_argument(
-        "--log_dir",
-        default="./exp/stage2/",
-        help="Directory where to save tensorboard logs, saved models, etc.",
-    )
+    # parser.add_argument(
+    #     "--log_dir",
+    #     default="./exp/stage2/",
+    #     help="Directory where to save tensorboard logs, saved models, etc.",
+    # )
     parser.add_argument(
         "--resume_from_checkpoint",
         default=None,
         help="Allow the training to be resumed, take as input a previously saved model (.ckpt).",
     )
-    parser.add_argument(
-        "--test_from_checkpoint", default=None, help="Test the model specified"
-    )
+    # parser.add_argument(
+    #     "--test_from_checkpoint", default=None, help="Test the model specified"
+    # )
     parser.add_argument(
         "--gpus",
         default="1",
@@ -440,7 +441,7 @@ def prepare_run(argv=None):
     )
 
     args = parser.parse_args(argv)
-    args.log_dir += args.prefix
+    #args.log_dir += args.prefix
     with open(args.conf_file, "r") as f:
         configs = yaml.safe_load(f)
 
@@ -456,7 +457,7 @@ def prepare_run(argv=None):
         configs["training"]["ema_factor"] = args.ema
 
     evaluation = False 
-    test_from_checkpoint = args.test_from_checkpoint
+    test_from_checkpoint = configs["ultra"]["test_from_checkpoint"]
 
     if args.eval_from_checkpoint is not None:
         test_from_checkpoint = args.eval_from_checkpoint
@@ -489,7 +490,6 @@ if __name__ == "__main__":
     # launch run
     single_run(
         configs,
-        args.log_dir,
         args.gpus,
         args.resume_from_checkpoint,
         test_model_state_dict,
