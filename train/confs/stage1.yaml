@@ -1,5 +1,5 @@
 training:
-  #batch size: [synth, weak, unlabel]
+  #batch size: [strong_label, synth, weak, unlabel]
   batch_size: [24, 24, 48, 48]
   batch_size_val: 128
   const_max: 2 # max weight used for self supervised loss
@@ -14,7 +14,7 @@ training:
   n_test_thresholds: 50 # number of thresholds used to compute psds in test
   ema_factor: 0.999 # ema factor for mean teacher
   self_sup_loss: mse # bce or mse
-  backend: "ddp" # pytorch lightning backend, ddp, dp or None
+  backend: "auto" # pytorch lightning backend, ddp, dp or None, auto
   validation_interval: 10 # we use a large validation interval to save time
   weak_split: 0.9
   seed: 42
@@ -23,7 +23,7 @@ training:
   mixup: soft # Soft mixup gives the ratio of the mix to the labels, hard mixup gives a 1 to every label present.
   obj_metric_synth_type: intersection # intersection
   enable_progress_bar: True
-  log_dir: '/20A021/DESED_dataset/exp/stage1/0928'  # 从parser移到这里
+  log_dir: '/20A021/DESED_dataset/exp/stage1/1010'  # 从parser移到这里
 scaler:
   statistic: instance # instance or dataset-wide statistic
   normtype: minmax # minmax or standard or mean normalization
@@ -51,8 +51,8 @@ data: # change with your paths if different.
   test_folder_44k: "/20A021/DESED_dataset/validation_44k(1168)"                               # test when training, StronglyAnnotatedSet
   test_tsv: "/20A021/DESED_dataset/annotations/validation(1168).tsv"                                # test when training, StronglyAnnotatedSet
   test_dur: "/20A021/DESED_dataset/annotations/validation_durations.tsv"                      # test when training, StronglyAnnotatedSet
-  eval_folder: "YOUR_PATH/dcase2021/dataset/audio/eval21_16k"                                               # eval when evaluation, unlabeled
-  eval_folder_44k: "YOUR_PATH/dcase2021/dataset/audio/eval21"                                               # eval when evaluation, unlabeled
+  #eval_folder: "/20A021/DESED_dataset/validation_16k(1168)/"                                               # eval when evaluation, unlabeled
+  #eval_folder_44k: "YOUR_PATH/dcase2021/dataset/audio/eval21"                                               # eval when evaluation, unlabeled
   audio_max_len: 10
   fs: 16000
   net_subsample: 4
@@ -93,5 +93,6 @@ net:
 ultra:
   atst_dropout: 0.0
   model_init: # leave it empty
-  atst_init: "/20A021/DESED_dataset/ckpts/atst_as2M.ckpt" # absolute path to checkpoint
+  atst_init: "/20A021/DESED_dataset/ckpts/atst_as2M.ckpt"
+  test_from_checkpoint: null #"/20A021/DESED_dataset/exp/stage1/0928/checkpoints/last.ckpt"
 comments: 

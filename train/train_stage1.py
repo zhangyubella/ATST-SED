@@ -390,20 +390,16 @@ def prepare_run(argv=None):
     # )
 
     args = parser.parse_args(argv)
-    #args.log_dir += args.prefix
     with open(args.conf_file, "r") as f:
         configs = yaml.safe_load(f)
 
-    evaluation = False 
-    test_from_checkpoint = args.test_from_checkpoint
-
-    if args.eval_from_checkpoint is not None:
-        test_from_checkpoint = args.eval_from_checkpoint
-        evaluation = True
+    test_from_checkpoint = configs["ultra"]["test_from_checkpoint"]
+    evaluation = False
 
     test_model_state_dict = None
     if test_from_checkpoint is not None:
-        checkpoint = torch.load(test_from_checkpoint)
+        #evaluation = True
+        checkpoint = torch.load(test_from_checkpoint, map_location='cuda:0')
         configs_ckpt = checkpoint["hyper_parameters"]
         configs_ckpt["data"] = configs["data"]
         print(

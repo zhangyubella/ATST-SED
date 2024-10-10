@@ -173,10 +173,7 @@ class SEDTask4(pl.LightningModule):
     @property
     def exp_dir(self):
         if self._exp_dir is None:
-            try:
-                self._exp_dir = self.logger.log_dir
-            except Exception as e:
-                self._exp_dir = self.hparams["log_dir"]
+            self._exp_dir = '/20A021/DESED_dataset/exp/stage1/0928'#self.hparams["training"]["log_dir"]
         return self._exp_dir
 
     def lr_scheduler_step(self, scheduler, metric):
@@ -688,6 +685,7 @@ class SEDTask4(pl.LightningModule):
     def on_test_epoch_end(self):
         # pub eval dataset
         save_dir = os.path.join(self.exp_dir, "metrics_test")
+        os.makedirs(save_dir, exist_ok=True)
 
         if self.evaluation:
             # only save prediction scores
@@ -863,13 +861,12 @@ class SEDTask4(pl.LightningModule):
                 "test/teacher/event_f1_macro": event_macro_teacher,
                 "test/teacher/intersection_f1_macro": intersection_f1_macro_teacher,
             }
-        if self.logger is not None:
-            self.logger.log_metrics(results)
-            self.logger.log_hyperparams(self.hparams, results)
+            if self.logger is not None:
+                self.logger.log_metrics(results)
+                self.logger.log_hyperparams(self.hparams)
 
-
-        for key in results.keys():
-            self.log(key, results[key], prog_bar=True, logger=True)
+            for key in results.keys():
+                self.log(key, results[key], prog_bar=True, logger=True)
 
     def configure_optimizers(self):
         return self.opt, self.scheduler

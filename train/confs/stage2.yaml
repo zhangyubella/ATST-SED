@@ -23,7 +23,7 @@ training:
   mixup: soft # Soft mixup gives the ratio of the mix to the labels, hard mixup gives a 1 to every label present.
   obj_metric_synth_type: intersection # intersection
   enable_progress_bar: True
-  log_dir: '/20A021/DESED_dataset/exp/stage2/0930/'  # 从parser移到这里
+  log_dir: '/20A021/DESED_dataset/exp/stage2/1009/'  # 从parser移到这里
 scaler:
   statistic: instance # instance or dataset-wide statistic
   normtype: minmax # minmax or standard or mean normalization
@@ -100,8 +100,8 @@ net:
   aggregation_type: pool1d
 ultra:
   atst_dropout: 0.0
-  model_init: "/20A021/DESED_dataset/ckpts/stage_1.ckpt" # path of model checkpoint from stage 1
+  model_init: "/20A021/DESED_dataset/exp/stage1/1008/lightning_logs/ofrptbba/checkpoints/last.ckpt" # path of model checkpoint from stage 1
   atst_init: "/20A021/DESED_dataset/ckpts/atst_as2M.ckpt"# absolute path to checkpoint
   ########## 有test_from_checkpoint，就是test mode
-  test_from_checkpoint: '/20A021/DESED_dataset/exp/stage2/0930/lightning_logs/ow5m7xgl/checkpoints/epoch=239-step=6960.ckpt'
+  test_from_checkpoint: '/20A021/DESED_dataset/exp/stage2/1009/lightning_logs/3n3m7nf0/checkpoints/epoch=249-step=7250.ckpt'
 comments: 
